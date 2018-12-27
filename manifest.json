@@ -1,0 +1,13 @@
+{
+    "manifest_version": 2,
+   
+    "name": "Twitter Doctor",
+    "version": "0.1.0",
+    "description": "Clean your Twitter timeline and show tweets only from people you follow.",
+   
+    "content_scripts": [{
+      "css": ["css/style.css"],
+      "js": ["js/main.js"],
+      "matches": ["https://twitter.com/*"]
+    }]   
+}
