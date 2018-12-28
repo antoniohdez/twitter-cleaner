@@ -1,5 +1,11 @@
 const tweetsContainer = document.querySelector( '#stream-items-id' );
-const tweets = tweetsContainer.querySelectorAll( '[data-item-type="tweet"]' );
+let tweets;
+if ( tweetsContainer ) {
+    tweets = tweetsContainer.querySelectorAll( '[data-item-type="tweet"]' );
+} else {
+    tweets = [];
+}
+
 
 function filterTweets( tweets ) {
     Array.from( tweets ).forEach(( tweet ) => {
