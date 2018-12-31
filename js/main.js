@@ -1,50 +1,83 @@
-function filterTweet( tweet ) {
-    const following = JSON.parse( tweet.dataset.youFollow );
-    const retweet = !!tweet.dataset.retweetId;
-    const self = tweet.classList.contains( 'my-tweet' ) // My own tweets.
+function getTweets( items ) {
+    const tweets = items.map( item => {
+        const type = JSON.parse( item.dataset.suggestionJson || '{}' ).scribe_component;
+        const tweet = { type };
 
-    // If it's content I want to see, then stop execution
-    if ( following || retweet || self ) {
-        return;
-    } else { // If it's undesired content, hide tweet.
-        
-        tweet.style.opacity = 0.25;
-    }
+        if ( type === 'tweet' ) {
+            tweet.node = item.querySelector( '.tweet' );
+            
+        } else if ( type === 'conversation' ) {
+            tweet.container = item;
+            tweet.nodes = Array
+                .from( item.querySelector( '.conversation-module' ).children )
+                .map( item => item.querySelector( '.tweet' ) )
+                .filter( item => item !== null ); // Some long conversation tweets may have a child (a separator) to show only beginning and end of thread.   
+        }
+
+        return tweet;
+    });
+
+    return tweets;
 }
 
-function filterConversation( items, container ) {
-    const tweets = items
-        .map( item => item.querySelector( '.tweet' ))
-        .filter( item => item !== null ); // Some long conversation tweets may have a child (a separator) to show only beginning and end of thread.
+function classifyTweet( tweet ) {
+    if ( tweet.type === 'tweet' ) {
+        return classifyIndividualTweet( tweet )
+    } else if ( tweet.type === 'conversation' ) {
+        return classifyConversationTweet( tweet );
+    }
+};
 
-    const followingAll = tweets.reduce(( following, tweet ) => {
-        return following && tweet && JSON.parse( tweet.dataset.youFollow );
+function classifyIndividualTweet( tweet ) {
+    const node = tweet.node;
+    const data = node.dataset;
+
+    const following = JSON.parse( data.youFollow );
+    const retweet = !!data.retweetId;
+    const self = node.classList.contains( 'my-tweet' ) // My own tweets.
+
+    if ( following ) {
+        tweet.context = 'following';
+    } else if ( retweet ) {
+        tweet.context = 'retweet';
+    } else if ( self ) {
+        tweet.context = 'self';
+    } else {
+        // Content I don't want to see...
+        node.style.opacity = 0.25; // This line shouln't be here...
+    }
+
+    return tweet;
+}
+
+function classifyConversationTweet( tweet ) {
+    const followingAll = tweet.nodes.reduce(( following, node ) => {
+        return following && (
+            JSON.parse( node.dataset.youFollow ) 
+            || 
+            node.classList.contains( 'my-tweet' ) 
+        );
     }, true );
 
     if ( followingAll ) {
-        container.style.background = 'green';
+        tweet.context = 'conversation-full-follow';
+        tweet.container.style.background = 'green';
     } else {
-        container.style.background = 'yellow';
+        tweet.context = 'conversation-partial-follow';
+        tweet.container.style.background = 'yellow';
     }
+
+    return tweet;
+}
+
+function hideTweet( tweet ) {
+    
 }
 
 function filterItems( items ) {
-    Array.from( items ).forEach(( item ) => {
-        const itemType = JSON.parse( item.dataset.suggestionJson || '{}' ).scribe_component;
-
-        if ( itemType === 'tweet' ) {
-            const tweet = item.querySelector( '.tweet' );
-
-            filterTweet( tweet );
-
-        } else if ( itemType === 'conversation' ) {
-            const items = Array.from( item.querySelector( '.conversation-module' ).children );
-            
-            filterConversation( items, item );
-        } else {
-            // Any other types???
-        }
-    });
+    getTweets( items )
+        .map( classifyTweet )
+        .map( hideTweet );
 }
 
 function observeTimeline( mutations, observer ) {
@@ -64,13 +97,13 @@ function observeTimeline( mutations, observer ) {
 const tweetsContainer = document.querySelector( '#stream-items-id' );
 
 if ( tweetsContainer ) {
-    const tweets = tweetsContainer.children;
+    const tweets = Array.from( tweetsContainer.children );
     filterItems( tweets );
 
     // Check for changes in the DOM (timeline only)
     var observer = new MutationObserver( observeTimeline );
-    observer.observe(tweetsContainer, { childList: true });
+    observer.observe( tweetsContainer, { childList: true });
 
 } else {
-    // Check this case...
+    // Timeline not loaded???
 }
