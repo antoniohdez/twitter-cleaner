@@ -1,44 +1,76 @@
-const tweetsContainer = document.querySelector( '#stream-items-id' );
-let tweets;
-if ( tweetsContainer ) {
-    tweets = tweetsContainer.querySelectorAll( '[data-item-type="tweet"]' );
-} else {
-    tweets = [];
+function filterTweet( tweet ) {
+    const following = JSON.parse( tweet.dataset.youFollow );
+    const retweet = !!tweet.dataset.retweetId;
+    const self = tweet.classList.contains( 'my-tweet' ) // My own tweets.
+
+    // If it's content I want to see, then stop execution
+    if ( following || retweet || self ) {
+        return;
+    } else { // If it's undesired content, hide tweet.
+        
+        tweet.style.opacity = 0.25;
+    }
 }
 
+function filterConversation( items, container ) {
+    const tweets = items
+        .map( item => item.querySelector( '.tweet' ))
+        .filter( item => item !== null ); // Some long conversation tweets may have a child (a separator) to show only beginning and end of thread.
 
-function filterTweets( tweets ) {
-    Array.from( tweets ).forEach(( tweet ) => {
-        const dataNode = tweet.querySelector( '[data-you-follow]' );
-    
-        if ( dataNode ) {
-            const following = JSON.parse( dataNode.dataset.youFollow ); // 'JSON.parse' checks for valid boolean values...
-            const retweet = dataNode.dataset.retweetId; // Could be 'undefined'
-            const self = dataNode.classList.contains( 'my-tweet' ) // My own tweets.
-    
-            if ( !following && !retweet && !self ) {
-                    tweet.style.opacity = 0.25;
-            }
-    
-        } else { // Quoted tweet
-            // tweet.style.opacity = 0.25;
+    const followingAll = tweets.reduce(( following, tweet ) => {
+        return following && tweet && JSON.parse( tweet.dataset.youFollow );
+    }, true );
+
+    if ( followingAll ) {
+        container.style.background = 'green';
+    } else {
+        container.style.background = 'yellow';
+    }
+}
+
+function filterItems( items ) {
+    Array.from( items ).forEach(( item ) => {
+        const itemType = JSON.parse( item.dataset.suggestionJson || '{}' ).scribe_component;
+
+        if ( itemType === 'tweet' ) {
+            const tweet = item.querySelector( '.tweet' );
+
+            filterTweet( tweet );
+
+        } else if ( itemType === 'conversation' ) {
+            const items = Array.from( item.querySelector( '.conversation-module' ).children );
+            
+            filterConversation( items, item );
+        } else {
+            // Any other types???
         }
     });
 }
 
-var observer = new MutationObserver(function(mutations, observer) {
+function observeTimeline( mutations, observer ) {
     mutations.forEach(( mutation ) => {
         if ( mutation.type === 'childList' && mutation.addedNodes.length > 0 )  {
-            const tweets = Array.from( mutation.addedNodes ).filter(( node ) => 
-                node.tagName.toLowerCase() === 'li' &&
-                node.dataset.itemType === 'tweet'
-            );
+            const items = Array
+                .from( mutation.addedNodes )
+                .filter( 
+                    node => node.tagName.toLowerCase() === 'li'
+                );
 
-            filterTweets( tweets );
+            filterItems( items );
         }
-    })
-});
+    });
+}
 
-observer.observe(tweetsContainer, { childList: true });
+const tweetsContainer = document.querySelector( '#stream-items-id' );
 
-filterTweets( tweets );
+if ( tweetsContainer ) {
+    const tweets = tweetsContainer.children;
+    filterItems( tweets );
+
+    // Check for changes in the DOM (timeline only)
+    var observer = new MutationObserver( observeTimeline );
+    observer.observe(tweetsContainer, { childList: true });
+
+} else {
+    // Check this case...
+}
