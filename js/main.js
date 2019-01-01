@@ -26,25 +26,34 @@ function classifyTweet( tweet ) {
     } else if ( tweet.type === 'conversation' ) {
         return classifyConversationTweet( tweet );
     }
+
+    return tweet;
 };
 
 function classifyIndividualTweet( tweet ) {
     const node = tweet.node;
     const data = node.dataset;
 
-    const following = JSON.parse( data.youFollow );
-    const retweet = !!data.retweetId;
-    const self = node.classList.contains( 'my-tweet' ) // My own tweets.
+    if ( data.youFollow === 'true' ) {
+        tweet.context = 'normal';
 
-    if ( following ) {
-        tweet.context = 'following';
-    } else if ( retweet ) {
+    } else if ( !!data.retweetId ) {
         tweet.context = 'retweet';
-    } else if ( self ) {
+
+    } else if ( node.classList.contains( 'my-tweet' ) ) {
         tweet.context = 'self';
+
+    } else if ( data.promoted === 'true' ) {
+        tweet.context = 'promoted';
+
+    } else if ( [ 'suggest_activity_tweet' ].includes( data.componentContext ) ) {
+        tweet.context = 'like';
+
+    } else if ( [ 'suggest_pyle_tweet', 'suggest_sc_tweet' ].includes( data.componentContext ) ) {
+        tweet.context = 'suggested';
+        
     } else {
-        // Content I don't want to see...
-        node.style.opacity = 0.25; // This line shouln't be here...
+        tweet.context = 'missing-case';
     }
 
     return tweet;
@@ -53,7 +62,7 @@ function classifyIndividualTweet( tweet ) {
 function classifyConversationTweet( tweet ) {
     const followingAll = tweet.nodes.reduce(( following, node ) => {
         return following && (
-            JSON.parse( node.dataset.youFollow ) 
+            node.dataset.youFollow === 'true'
             || 
             node.classList.contains( 'my-tweet' ) 
         );
@@ -71,7 +80,13 @@ function classifyConversationTweet( tweet ) {
 }
 
 function hideTweet( tweet ) {
+    if ( tweet.type === 'tweet' ) {
+        tweet.node.prepend( tweet.context );
+    } else if ( tweet.type === 'conversation' ) {
+        tweet.container.prepend( tweet.context );
+    }
     
+    // tweet.node.style.opacity = 0.25; // This line shouln't be here...
 }
 
 function filterItems( items ) {
@@ -97,7 +112,9 @@ function observeTimeline( mutations, observer ) {
 const tweetsContainer = document.querySelector( '#stream-items-id' );
 
 if ( tweetsContainer ) {
-    const tweets = Array.from( tweetsContainer.children );
+    const tweets = Array
+        .from( tweetsContainer.children )
+        .filter( node => node.tagName.toLowerCase() === 'li' );
     filterItems( tweets );
 
     // Check for changes in the DOM (timeline only)
