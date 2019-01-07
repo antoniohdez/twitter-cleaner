@@ -70,21 +70,39 @@ function classifyConversationTweet( tweet ) {
 
     if ( followingAll ) {
         tweet.context = 'conversation-full-follow';
-        tweet.container.style.background = 'green';
+        //tweet.container.style.background = 'green';
     } else {
         tweet.context = 'conversation-partial-follow';
-        tweet.container.style.background = 'yellow';
+        //tweet.container.style.background = 'yellow';
     }
 
     return tweet;
 }
 
 function hideTweet( tweet ) {
-    if ( tweet.type === 'tweet' ) {
+    chrome.storage.sync.get( [ tweet.context, 'hide' ], function( options ) {
+        if ( options[ tweet.context ] ) { // If options is active, it means hide the tweet.
+            let node;
+            if ( tweet.type === 'tweet' ) {
+                node = tweet.node;
+            } else if ( tweet.type === 'conversation' ) {
+                node = tweet.container;
+                
+            }
+
+            if ( options[ 'hide' ] ) {
+                tweet.node.style.display = 'none';
+            } else {
+                tweet.node.style.opacity = 0.25;
+            }
+        }
+    })
+    
+    /*if ( tweet.type === 'tweet' ) {
         tweet.node.prepend( tweet.context );
     } else if ( tweet.type === 'conversation' ) {
         tweet.container.prepend( tweet.context );
-    }
+    }*/
     
     // tweet.node.style.opacity = 0.25; // This line shouln't be here...
 }
