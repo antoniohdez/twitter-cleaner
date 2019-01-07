@@ -4,6 +4,10 @@
     "name": "Twitter Cleaner",
     "version": "0.1.0",
     "description": "Clean your Twitter timeline and show tweets only from people you follow.",
+
+    "permissions": [
+        "storage"
+    ],
    
     "content_scripts": [{
       "css": ["css/style.css"],
@@ -13,7 +17,7 @@
     }],
 
     "browser_action": {
-        "default_popup": "popup.html"
+        "default_popup": "html/options.html"
     },
 
     "icons": {

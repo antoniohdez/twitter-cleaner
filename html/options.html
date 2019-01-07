@@ -2,8 +2,8 @@
 <html>
     <head>
       <title>Water Popup</title>
-      <link rel="stylesheet" type="text/css" href="css/style.css">
-      <link rel="stylesheet" type="text/css" href="css/switch.css">
+      <link rel="stylesheet" type="text/css" href="../css/style.css">
+      <link rel="stylesheet" type="text/css" href="../css/switch.css">
     </head>
     <body>
         <div class="container">
@@ -13,42 +13,49 @@
             </header>
             <form class="form">
                 <div class="form__item">
-                    <label class="form__label">Hide recommended tweets (from accounts I don't follow)</label>
+                    <label class="form__label">Hide suggested tweets (from accounts I don't follow)</label>
                     <label class="switch">
-                        <input type="checkbox" />
+                        <input type="checkbox" name="suggested" />
                         <span class="slider round"></span>
                     </label>
                 </div>
                 <div class="form__item">
                     <label class="form__label">Hide tweets liked by other accounts</label>
                     <label class="switch">
-                        <input type="checkbox" />
+                        <input type="checkbox" name="like" />
                         <span class="slider round"></span>
                     </label>
                 </div>
                 <div class="form__item">
                     <label class="form__label">Hide my own tweets (in the timeline)</label>
                     <label class="switch">
-                        <input type="checkbox" />
+                        <input type="checkbox" name="self" />
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="form__item">
+                    <label class="form__label">Hide threads that involve accounts I don't follow.</label>
+                    <label class="switch">
+                        <input type="checkbox" name="conversation-partial-follow" />
                         <span class="slider round"></span>
                     </label>
                 </div>
                 <div class="form__item">
                     <label class="form__label">Hide ads or promoted tweets</label>
                     <label class="switch">
-                        <input type="checkbox" />
+                        <input type="checkbox" name="promoted" />
                         <span class="slider round"></span>
                     </label>
                 </div>
                 <div class="form__item">
                     <label class="form__label">Change transparency insted of hiding tweets</label>
                     <label class="switch">
-                        <input type="checkbox" />
+                        <input type="checkbox" name="hide" />
                         <span class="slider round"></span>
                     </label>
                 </div>
             </form>
         </div>
-     <script src="js/popup.js"></script>
+     <script src="../js/options.js"></script>
     </body>
   </html>
